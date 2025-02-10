@@ -1,44 +1,109 @@
+1. ESP32 Code for Speech Analysis and Sending Data to Server:
 
-// Connections to A4988
-const int dirPin = 2;  // Direction
-const int stepPin = 3; // Step
+#include <WiFi.h>
+#include <HTTPClient.h>
+#include <ArduinoJson.h>
+#include <AccelStepper.h>
 
-// Motor steps per rotation
-const int STEPS_PER_REV = 200;
- 
+#define STEP_PIN 5
+#define DIR_PIN 18
+
+const char* ssid = "yourSSID";
+const char* password = "yourPassword";
+const char* serverURL = "http://your-server.com/store_command.php";
+
+AccelStepper stepper(AccelStepper::DRIVER, STEP_PIN, DIR_PIN);
+
 void setup() {
-  
-  // Setup the pins as Outputs
-  pinMode(stepPin,OUTPUT); 
-  pinMode(dirPin,OUTPUT);
+    Serial.begin(115200);
+    WiFi.begin(ssid, password);
+    while (WiFi.status() != WL_CONNECTED) {
+        delay(1000);
+        Serial.println("Connecting to WiFi...");
+    }
+    Serial.println("Connected to WiFi");
+    stepper.setMaxSpeed(1000);
+    stepper.setAcceleration(500);
 }
+
 void loop() {
-  
-  // Set motor direction clockwise
-  digitalWrite(dirPin,HIGH); 
-  
-  // Spin motor one rotation slowly
-  for(int x = 0; x < STEPS_PER_REV; x++) {
-    digitalWrite(stepPin,HIGH); 
-    delayMicroseconds(2000); 
-    digitalWrite(stepPin,LOW); 
-    delayMicroseconds(2000); 
-  }
-  
-  // Pause for one second
-  delay(1000); 
-  
-  // Set motor direction counterclockwise
-  digitalWrite(dirPin,LOW);
-  
-  // Spin motor two rotations quickly
-  for(int x = 0; x < (STEPS_PER_REV * 2); x++) {
-    digitalWrite(stepPin,HIGH);
-    delayMicroseconds(1000);
-    digitalWrite(stepPin,LOW);
-    delayMicroseconds(1000);
-  }
-  
-  // Pause for one second
-  delay(1000);
+    String command = "forward"; // Replace with actual speech analysis code
+    sendToServer(command);
+    delay(5000);
+}
+
+void sendToServer(String command) {
+    HTTPClient http;
+    String url = String(serverURL) + "?command=" + command;
+    http.begin(url);
+    int httpCode = http.GET();
+    http.end();
+}
+
+
+2. PHP Code for Storing Commands in the Database:
+
+<?php
+$servername = "localhost";
+$username = "root";
+$password = "";
+$dbname = "commands_db";
+$conn = new mysqli($servername, $username, $password, $dbname);
+if ($conn->connect_error) {
+    die("Connection failed: " . $conn->connect_error);
+}
+if(isset($_GET['command'])){
+    $command = $_GET['command'];
+    $sql = "INSERT INTO commands (command) VALUES ('$command')";
+    if ($conn->query($sql) === TRUE) {
+        echo "Command stored successfully";
+    } else {
+        echo "Error: " . $conn->error;
+    }
+}
+$conn->close();
+?>
+
+3. PHP Code for Retrieving and Displaying Commands on a Web Page:
+
+<?php
+$servername = "localhost";
+$username = "root";
+$password = "";
+$dbname = "commands_db";
+$conn = new mysqli($servername, $username, $password, $dbname);
+$sql = "SELECT * FROM commands ORDER BY id DESC LIMIT 1";
+$result = $conn->query($sql);
+if ($result->num_rows > 0) {
+    while($row = $result->fetch_assoc()) {
+        echo "<h2>Last Command: " . $row["command"]. "</h2>";
+    }
+} else {
+    echo "No commands found.";
+}
+$conn->close();
+?>
+
+4. ESP32 Code for Fetching Commands and Controlling the Motor:
+
+void checkDatabase() {
+    HTTPClient http;
+    http.begin("http://your-server.com/get_command.php");
+    int httpResponseCode = http.GET();
+    if (httpResponseCode > 0) {
+        String payload = http.getString();
+        Serial.println(payload);
+        if (payload.indexOf("forward") >= 0) {
+            stepper.moveTo(1000);
+        } else if (payload.indexOf("backward") >= 0) {
+            stepper.moveTo(-500);
+        }
+    }
+    http.end();
+}
+
+void loop() {
+    checkDatabase();
+    stepper.run();
+    delay(5000);
 }
