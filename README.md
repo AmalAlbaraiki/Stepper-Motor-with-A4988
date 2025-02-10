@@ -252,7 +252,14 @@ In this project, an ESP32 module was integrated with a bipolar stepper motor and
 including speech-to-text conversion, data storage, and retrieval for interactive motor control via voice commands.
 
 ![IMG_8649](https://github.com/user-attachments/assets/6666f989-99e9-46b0-aca1-b06550863678)
+
 ![IMG_8705](https://github.com/user-attachments/assets/e857ee22-f34c-4c35-96fe-a583dd85aff1)
+
 ![IMG_8708](https://github.com/user-attachments/assets/885c92d3-b11c-4050-8a21-340e564b0ba3)
+
+![IMG_9532](https://github.com/user-attachments/assets/7f24f690-ef69-4971-944d-82f1b0d26824)
+
+![IMG_9531](https://github.com/user-attachments/assets/735305a5-a391-4e00-90f7-a7d4b0e11540)
+
 
 
